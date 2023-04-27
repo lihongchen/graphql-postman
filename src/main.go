@@ -121,8 +121,11 @@ func gqlInputFromOperation(o reformatted.Operation, operationName string) (*post
 	var argLine1, argLine2 string
 	for k, v := range o.Arguments {
 		count++
-
-		argLine1 += `$` + k + `: ` + v.Name
+		if v.List {
+			argLine1 += `$` + k + `: [` + v.Name + "]"
+		} else {
+			argLine1 += `$` + k + `: ` + v.Name
+		}
 		if v.NonNull {
 			argLine1 += `!`
 		}
