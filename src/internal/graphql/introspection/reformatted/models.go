@@ -5,6 +5,7 @@ package reformatted
 // layers deep that you'll have to go through to determine the exact typing.
 type TypeRef struct {
 	Kind            string // One of the root kinds e.g. kind.Scalar, kind.Enum, kind.Union
+	Description     string
 	Name            string // Name of the type, e.g. scalar.Float, scalar.ID
 	NonNull         bool   // Whether or not the type is nullable
 	List            bool   // Whether or not the type is in a list
@@ -27,6 +28,7 @@ type TypeRef struct {
 //
 type Type struct {
 	Name          string
+	Description   string
 	Fields        map[string]TypeRef // The key is the name of the field, the value is the value
 	InputFields   map[string]TypeRef // The key is the name of the field, the value is the value
 	EnumValues    []string
@@ -35,9 +37,10 @@ type Type struct {
 
 // Operation is a struct that contains the data needed for a GraphQL query or mutation.
 type Operation struct {
-	Name      string
-	Arguments map[string]TypeRef // What the operation input requires, the key is the name of the field, the value is the value
-	Type      TypeRef            // What the operation returns
+	Name        string
+	Description string
+	Arguments   map[string]TypeRef // What the operation input requires, the key is the name of the field, the value is the value
+	Type        TypeRef            // What the operation returns
 }
 
 // Model is the reformatted version of the introspection.Model.

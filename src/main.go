@@ -5,15 +5,16 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io/ioutil"
+	"math/rand"
+	"strings"
+
 	"github.com/RobinCPel/graphql-postman/src/internal/graphql/introspection"
 	"github.com/RobinCPel/graphql-postman/src/internal/graphql/introspection/reformatted"
 	"github.com/RobinCPel/graphql-postman/src/internal/graphql/kind"
 	"github.com/RobinCPel/graphql-postman/src/internal/graphql/scalar"
 	"github.com/RobinCPel/graphql-postman/src/internal/postman"
 	log "github.com/sirupsen/logrus"
-	"io/ioutil"
-	"math/rand"
-	"strings"
 )
 
 var types map[string]reformatted.Type
@@ -34,8 +35,9 @@ func getDummyValueOfScalar(scalarName string) string {
 		return `true`
 	case scalar.ID:
 		return `"V2llRGl0TGVlc3RJc0dlaw=="`
+	case scalar.Date:
+		return `"2023-04-15"`
 	}
-
 	log.Warning(`scalar "` + scalarName + `" does not exist, using NULL as dummy value`)
 	return `NULL`
 }
@@ -56,7 +58,7 @@ func getDummyValueOfType(typeName, typeKind string) (string, error) {
 		return getDummyValueOfScalar(t.Name), nil
 
 	case kind.InputObject: // Has only a name and input fields
-		dummyValue := `{`
+		dummyValue := `{` + "\n"
 		var count int
 		for key, val := range t.InputFields {
 			count++
@@ -68,12 +70,12 @@ func getDummyValueOfType(typeName, typeKind string) (string, error) {
 
 			if val.List {
 				if val.TwoDList {
-					dummyValue += `"` + key + `":[[` + typeDummyVal + `]]`
+					dummyValue += `"` + key + `":[[` + typeDummyVal + `]] ` + "\n"
 				} else {
-					dummyValue += `"` + key + `":[` + typeDummyVal + `]`
+					dummyValue += `"` + key + `":[` + typeDummyVal + `]` + "\n"
 				}
 			} else {
-				dummyValue += `"` + key + `":` + typeDummyVal
+				dummyValue += `"` + key + `":` + typeDummyVal + "\n"
 			}
 
 			if count != len(t.InputFields) {
@@ -112,7 +114,7 @@ func getDummyValueOfType(typeName, typeKind string) (string, error) {
 }
 
 func gqlInputFromOperation(o reformatted.Operation, operationName string) (*postman.GqlInput, error) {
-	input := postman.GqlInput{Name: o.Name}
+	input := postman.GqlInput{Name: o.Description + "_" + o.Name}
 
 	// Assemble the query
 	var count int
@@ -137,28 +139,32 @@ func gqlInputFromOperation(o reformatted.Operation, operationName string) (*post
 
 	// Assemble the dummy variables
 	count = 0
+	input.Variables += `{ ` + "\n"
 	for k, v := range o.Arguments {
 		count++
 
 		if v.List {
-			log.Warn("list graphql operation arguments are not supported")
+			input.Variables += `"` + k + `":[`
+		} else {
+			input.Variables += `"` + k + `":`
 		}
-
-		input.Variables += `{"` + k + `":`
 
 		dummyVal, err := getDummyValueOfType(v.Name, v.Kind)
 		if err != nil {
 			return nil, err
 		}
 		input.Variables += dummyVal
-
+		if v.List {
+			input.Variables += `]`
+		}
 		if count == len(o.Arguments) {
 			// Last one, close off the json
-			input.Variables += `}`
+			input.Variables += "\n" + `}`
 		} else {
 			// Not the last one? Add the delimiter
-			input.Variables += `, `
+			input.Variables += `, ` + "\n"
 		}
+
 	}
 
 	return &input, nil
@@ -166,22 +172,19 @@ func gqlInputFromOperation(o reformatted.Operation, operationName string) (*post
 
 func main() {
 	fmt.Print(`
-                                       (     
-                                       (        (                                       
- (                            )   (    )\ )     )\ )             )                      
- )\ )    (       )         ( /( ( )\  (()/(    (()/(          ( /(    )       )         
-(()/(    )(   ( /(  '  )   )\()))((_)  /(_))    /(_)) (   (   )\())  (     ( /(   (     
- /(_))_ (()\  )(_)) /(/(  ((_)\((_)_  (_))     (_))   )\  )\ (_))/   )\  ' )(_))  )\ )  
-(_)) __| ((_)((_)_ ((_)_\ | |(_)/ _ \ | |      | _ \ ((_)((_)| |_  _((_)) ((_)_  _(_/(  
-  | (_ || '_|/ _' || '_ \)| ' \| (_) || |__    |  _// _ \(_-<|  _|| '  \()/ _' || ' \)) 
-   \___||_|  \__,_|| .__/ |_||_|\__\_\|____|   |_|  \___//__/ \__||_|_|_| \__,_||_||_|  
-                   |_|
 
+	██████╗ ██████╗  █████╗ ██████╗ ██╗  ██╗ ██████╗ ██╗         ██████╗  ██████╗ ███████╗████████╗███╗   ███╗ █████╗ ███╗   ██╗
+	██╔════╝ ██╔══██╗██╔══██╗██╔══██╗██║  ██║██╔═══██╗██║         ██╔══██╗██╔═══██╗██╔════╝╚══██╔══╝████╗ ████║██╔══██╗████╗  ██║
+	██║  ███╗██████╔╝███████║██████╔╝███████║██║   ██║██║         ██████╔╝██║   ██║███████╗   ██║   ██╔████╔██║███████║██╔██╗ ██║
+	██║   ██║██╔══██╗██╔══██║██╔═══╝ ██╔══██║██║▄▄ ██║██║         ██╔═══╝ ██║   ██║╚════██║   ██║   ██║╚██╔╝██║██╔══██║██║╚██╗██║
+	╚██████╔╝██║  ██║██║  ██║██║     ██║  ██║╚██████╔╝███████╗    ██║     ╚██████╔╝███████║   ██║   ██║ ╚═╝ ██║██║  ██║██║ ╚████║
+	 ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝  ╚═╝ ╚══▀▀═╝ ╚══════╝    ╚═╝      ╚═════╝ ╚══════╝   ╚═╝   ╚═╝     ╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝
+																																 
 `)
 
 	// Define flags
 	var url, outputFileName, postmanCollectionID, postmanCollectionName string
-	flag.StringVar(&url, "endpoint", "", "graphql endpoint to connect to")
+	flag.StringVar(&url, "endpoint", "http://192.168.2.10:8080/query", "graphql endpoint to connect to")
 	flag.StringVar(&outputFileName, "output", "api.postman_collection.json", "the file to write the result to")
 	flag.StringVar(&postmanCollectionID, "id", "00000000-0000-0000-0000-000000000000", "the Postman Collection ID to use")
 	flag.StringVar(&postmanCollectionName, "name", "GraphQL Postman", "the Postman Collection name to use")
@@ -214,7 +217,6 @@ func main() {
 	// Convert the mutations
 	log.Info("Converting the mutations...")
 	for _, m := range model.Mutations {
-
 		gqlInput, err := gqlInputFromOperation(m, "mutation")
 		if err != nil {
 			log.WithField("name", m.Name).WithError(err).

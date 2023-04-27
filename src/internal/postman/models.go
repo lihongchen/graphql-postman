@@ -75,10 +75,10 @@ func createItems(gql []GqlInput) []Item {
 					},
 				},
 				URL: Url{
-					Raw:      "http://localhost/gql",
+					Raw:      "http://192.168.2.10:8080/api/query",
 					Protocol: "http",
-					Host:     []string{"localhost"},
-					Path:     []string{"gql"},
+					Host:     []string{"192.168.2.10:8080"},
+					Path:     []string{"/api/query"},
 				},
 			},
 			Response: []interface{}{},

@@ -1,10 +1,11 @@
 package reformatted
 
 import (
+	"strings"
+
 	"github.com/RobinCPel/graphql-postman/src/internal/graphql/introspection"
 	"github.com/RobinCPel/graphql-postman/src/internal/graphql/kind"
 	log "github.com/sirupsen/logrus"
-	"strings"
 )
 
 // reformatTypeRef reformats an introspection.TypeRef to a reformatted.TypeRef.
@@ -12,7 +13,6 @@ func reformatTypeRef(typeRef introspection.TypeRef) TypeRef {
 	var t TypeRef
 	nn := false
 	a := &typeRef
-
 	for a != nil {
 		switch strings.ToLower(a.Kind) {
 
@@ -91,9 +91,10 @@ func Reformat(model *introspection.Model) *Model {
 		}
 
 		reformatted.Mutations[i] = Operation{
-			Name:      m.Name,
-			Arguments: arguments,
-			Type:      reformatTypeRef(m.Type),
+			Description: m.Description,
+			Name:        m.Name,
+			Arguments:   arguments,
+			Type:        reformatTypeRef(m.Type),
 		}
 	}
 
@@ -106,9 +107,10 @@ func Reformat(model *introspection.Model) *Model {
 		}
 
 		reformatted.Queries[i] = Operation{
-			Name:      q.Name,
-			Arguments: arguments,
-			Type:      reformatTypeRef(q.Type),
+			Description: q.Description,
+			Name:        q.Name,
+			Arguments:   arguments,
+			Type:        reformatTypeRef(q.Type),
 		}
 	}
 
@@ -116,6 +118,7 @@ func Reformat(model *introspection.Model) *Model {
 	for _, t := range types {
 		rt := Type{
 			Name:          t.Name,
+			Description:   t.Description,
 			Fields:        make(map[string]TypeRef),
 			InputFields:   make(map[string]TypeRef),
 			EnumValues:    make([]string, 0),

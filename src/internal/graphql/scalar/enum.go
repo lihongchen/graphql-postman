@@ -7,4 +7,5 @@ const (
 	String  = "string"
 	Boolean = "boolean"
 	ID      = "id"
+	Date    = "date"
 )

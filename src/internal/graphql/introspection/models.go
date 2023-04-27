@@ -1,7 +1,8 @@
 package introspection
 
 type Named struct {
-	Name string `json:"name"`
+	Name        string `json:"name"`
+	Description string
 }
 
 // TypeRef stores a type reference.
@@ -9,23 +10,24 @@ type Named struct {
 // have multiple kind.Descriptive before that.
 //
 // For example, here is a TypeRef that has a non-nullable list of non-nullable scalar.Integer's:
-// "typeRef": {
-//   "name": null,
-//   "kind": "non_null", // kind.NonNull
-//   "ofType": {
-//     "name": null,
-//     "kind": "list", // kind.List
-//     "ofType": {
-//       "name": null,
-//       "kind": "non_null", // kind.NonNull
-//       "ofType":  {
-//         "name": "Integer", // scalar.Integer
-//         "kind": "scalar",  // kind.Scalar
-//         "ofType": null
-//       }
-//     }
-//   }
-// }
+//
+//	"typeRef": {
+//	  "name": null,
+//	  "kind": "non_null", // kind.NonNull
+//	  "ofType": {
+//	    "name": null,
+//	    "kind": "list", // kind.List
+//	    "ofType": {
+//	      "name": null,
+//	      "kind": "non_null", // kind.NonNull
+//	      "ofType":  {
+//	        "name": "Integer", // scalar.Integer
+//	        "kind": "scalar",  // kind.Scalar
+//	        "ofType": null
+//	      }
+//	    }
+//	  }
+//	}
 //
 // Note that the name is always null until you get to a kind.Referring or kind.Base.
 type TypeRef struct {
